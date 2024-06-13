@@ -48,10 +48,36 @@ public class ServeurWeb {
                      BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                      OutputStream out = clientSocket.getOutputStream()) {
                     if (doc.getElementsByTagName("reject").item(0)!=null && doc.getElementsByTagName("reject").item(0).getTextContent()!= "") {
-                        if(clientSocket.getInetAddress().getHostAddress().equals(doc.getElementsByTagName("reject").item(0).getTextContent())){
+
+                        //on récupère les adresses du client, des réseaux acceptés et refusés.
+                        String adresseReseauClient = clientSocket.getInetAddress().getHostAddress();
+                        String adresseReseauRefusee = doc.getElementsByTagName("reject").item(0).getTextContent();
+                        String adresseReseauAcceptee = doc.getElementsByTagName("accept").item(0).getTextContent();
+
+                        //on les modifie afin de les comparer
+                        adresseReseauRefusee = adresseReseauRefusee.replace("."," ");
+                        adresseReseauAcceptee = adresseReseauAcceptee.replace("."," ");
+                        adresseReseauClient = adresseReseauClient.replace("."," ");
+                        String[] aRC = adresseReseauClient.split(" ");
+                        String[] aRF = adresseReseauRefusee.split(" ");
+                        String[] aRA = adresseReseauAcceptee.split(" ");
+
+                        // si l'adresse réseau du client correspond à l'adresse réseau refusée
+                        if((aRC[0].compareTo(aRF[0]) == 0) && (aRC[1].compareTo(aRF[1]) == 0) && (aRC[2].compareTo(aRF[2]) == 0)){
+                            //on coupe la connexion
                             clientSocket.close();
+                            System.out.println("Connexion refusée de " + clientSocket.getInetAddress());
                             continue;
                         }
+                        // si l'adresse réseau du client ne correspond pas non plus à une adresse réseau acceptée
+                        else if(!(aRC[0].compareTo(aRA[0]) == 0) && (aRC[1].compareTo(aRA[1]) == 0) && (aRC[2].compareTo(aRA[2]) == 0)){
+                            //on coupe aussi la connexion
+                            clientSocket.close();
+                            System.out.println("Connexion refusée, adresse inconnue de " + clientSocket.getInetAddress());
+                            continue;
+                        }
+                        //sinon cela signifique que l'adresse réseau est acceptée, et donc que l'on ne coupe pas la connection
+
                     }
                     System.out.println("Connexion acceptée de " + clientSocket.getInetAddress());
 
