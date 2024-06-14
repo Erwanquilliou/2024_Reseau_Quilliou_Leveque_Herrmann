@@ -61,7 +61,7 @@ public class ServeurWeb {
                         String[] aRC = adresseReseauClient.split(" ");
                         String[] aRF = adresseReseauRefusee.split(" ");
                         String[] aRA = adresseReseauAcceptee.split(" ");
-
+ 
                         // si l'adresse réseau du client correspond à l'adresse réseau refusée
                         if((aRC[0].compareTo(aRF[0]) == 0) && (aRC[1].compareTo(aRF[1]) == 0) && (aRC[2].compareTo(aRF[2]) == 0)){
                             //on coupe la connexion
