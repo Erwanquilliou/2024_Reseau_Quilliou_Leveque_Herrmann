@@ -22,7 +22,7 @@ public class ServeurWeb {
             }
         }
 
-        Document doc = créerDocument("src/config.xml");
+        Document doc = creerDocument("src/config.xml");
 
         BufferedWriter access = new BufferedWriter(new FileWriter(doc.getElementsByTagName("accesslog").item(0).getTextContent()));
         BufferedWriter err = new BufferedWriter( new FileWriter(doc.getElementsByTagName("errorlog").item(0).getTextContent(),true));
@@ -129,7 +129,7 @@ public class ServeurWeb {
         }
     }
 
-    public static Document créerDocument(String s) throws ParserConfigurationException, IOException, SAXException {
+    public static Document creerDocument(String s) throws ParserConfigurationException, IOException, SAXException {
         File inputFile = new File(s);
 
         // Créer une fabrique de constructeurs de documents
