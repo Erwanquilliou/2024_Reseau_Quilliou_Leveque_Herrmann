@@ -5,8 +5,8 @@ class AdresseReseau
 class AdresseMachine
 class ServeurWeb
 
-AdresseReseau "*" <-- "*" ServeurWeb : "a"
-AdresseMachine "1" <-- "*" ServeurWeb : "a"
+AdresseReseau "*" <-- "*" ServeurWeb
+AdresseMachine "1" <-- "*" ServeurWeb
 
 class AdresseReseau{
 - adresseR : String
@@ -18,6 +18,10 @@ class AdresseMachine{
 - adresseM : String
 + AdresseMachine(Socket)
 + getChaineAdresseM() : String[]
+}
+
+class ServeurWeb {
++ creerDocument(String): Document
 }
 
 @enduml
