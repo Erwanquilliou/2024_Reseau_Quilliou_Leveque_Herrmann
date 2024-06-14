@@ -22,20 +22,8 @@ public class ServeurWeb {
             }
         }
 
-        File inputFile = new File("src/config.xml");
+        Document doc = créerDocument("src/config.xml");
 
-        // Créer une fabrique de constructeurs de documents
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-
-        // Créer un constructeur de documents
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-
-        // Analyser le fichier XML et obtenir un objet Document
-        Document doc = dBuilder.parse(inputFile);
-
-        // Normaliser le document XML
-        doc.getDocumentElement().normalize();
-        System.out.println(doc.getElementsByTagName("port").item(0).getTextContent());
         if (doc.getElementsByTagName("port").item(0)!=null && doc.getElementsByTagName("port").item(0).getTextContent()!= ""){
             port = Integer.parseInt(doc.getElementsByTagName("port").item(0).getTextContent());
         }
@@ -136,5 +124,23 @@ public class ServeurWeb {
         } catch (Exception e) {
             System.err.println("Erreur lors du démarrage du serveur sur le port " + port + " : " + e.getMessage());
         }
+    }
+
+    public static Document créerDocument(String s) throws ParserConfigurationException, IOException, SAXException {
+        File inputFile = new File(s);
+
+        // Créer une fabrique de constructeurs de documents
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+
+        // Créer un constructeur de documents
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+
+        // Analyser le fichier XML et obtenir un objet Document
+        Document doc;
+        doc = dBuilder.parse(inputFile);
+
+        // Normaliser le document XML
+        doc.getDocumentElement().normalize();
+        return doc;
     }
 }
