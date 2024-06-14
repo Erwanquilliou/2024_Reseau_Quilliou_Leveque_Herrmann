@@ -4,6 +4,7 @@ import org.xml.sax.SAXException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Base64;
 import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -28,7 +29,7 @@ public class ServeurWeb {
         if (doc.getElementsByTagName("port").item(0)!=null && doc.getElementsByTagName("port").item(0).getTextContent()!= ""){
             port = Integer.parseInt(doc.getElementsByTagName("port").item(0).getTextContent());
         }
-        BufferedWriter err = new BufferedWriter( new FileWriter(doc.getElementsByTagName("errorlog").item(0).getTextContent(),true));
+        BufferedWriter err = new BufferedWriter( new FileWriter(doc.getElementsByTagName("errorlog").item(0).getTextContent()));
         BufferedWriter access = new BufferedWriter(new FileWriter(doc.getElementsByTagName("accesslog").item(0).getTextContent()));
         String cheminWeb = doc.getElementsByTagName("root").item(0).getTextContent();
             try (ServerSocket serverSocket = new ServerSocket(port) ){
@@ -80,15 +81,16 @@ public class ServeurWeb {
 
                     // Lire la requête du client
                     while ((inputLine = in.readLine()) != null) {
+                        String[] sep = inputLine.split(" ");
                         System.out.println(inputLine);
                         if (inputLine.startsWith("GET")) {
-                            requestedFile = cheminWeb + inputLine.split(" ")[1]; // /var/www/index.html
-                        }else{
-                            // Si aucun fichier n'est spécifié, on sert index.html par défaut
-                            requestedFile = cheminWeb + "/index.html";
+                            requestedFile = cheminWeb + sep[1]; // /var/www/index.html
                         }
                         if (inputLine.isEmpty()) {
                             break; // Fin des en-têtes HTTP
+                        }
+                        if (requestedFile == cheminWeb || requestedFile.equals(cheminWeb +"/")) {
+                            requestedFile = "/var/www/index.html";
                         }
                     }
                     BufferedWriter status = new BufferedWriter(new FileWriter("status.log"));
@@ -119,21 +121,41 @@ public class ServeurWeb {
                         byte[] fileContent = new byte[(int) file.length()];
                         fileInputStream.read(fileContent);
                         fileInputStream.close();
+                        String s = null;
+                        if (!requestedFile.endsWith("html")) {
+                            s = Base64.getEncoder().encodeToString(fileContent);
+                        }
+
 
                         String httpResponse = "HTTP/1.1 200 OK\r\n";
                         // Détecter le type de fichier et définir le Content-Type approprié
                         if (requestedFile.endsWith(".html")) {
-                            httpResponse += "Content-Type: text/html\r\n\r\n";
+                            httpResponse += "Content-Type: text/html\r\n";
                         } else if (requestedFile.endsWith(".xml")) {
                             httpResponse += "Content-Type: application/xml\r\n\r\n";
-                        } else {
-                            httpResponse += "\r\n";
+                        }else if(requestedFile.endsWith(".jpg")){
+                            httpResponse += "Content-Type: image/jpg\r\n";
+                        }
+                        else {
+                            httpResponse += "Content-Type: image/png\r\n";
                         }
 
-                        out.write(httpResponse.getBytes("UTF-8"));
-                        out.write(fileContent);
+                        if (!requestedFile.endsWith(".html")) {
+                            String base64Content = Base64.getEncoder().encodeToString(fileContent);
+                            System.out.println(base64Content);
+                            httpResponse += "Content-Encoding: base64\r\n";
+                            httpResponse += "Content-Length: " + base64Content.length() + "\r\n";
+                            httpResponse += "\r\n" + base64Content;
+                            out.write(httpResponse.getBytes("UTF-8"));
+                        } else {
+                            httpResponse += "Content-Length: " + fileContent.length + "\r\n";
+                            httpResponse += "\r\n";
+                            System.out.println(httpResponse);
+                            out.write(httpResponse.getBytes("UTF-8"));
+                            out.write(fileContent);
+                        }
                     } else {
-                        String httpResponse = "HTTP/1.1 404 Not Found\r\n\r\nFile Not Found";
+                        String httpResponse = "HTTP/1.1 404 Not Found\r\n\r\nFile Not Found ";
                         out.write(httpResponse.getBytes("UTF-8"));
                     }
 
@@ -141,12 +163,14 @@ public class ServeurWeb {
 
                 } catch (Exception e) {
                     err.write("l'erreur suivante est survenue : " + e.getMessage());
+                    err.newLine();
                 }
                 err.flush();
             }
 
         } catch (Exception e) {
             err.write("l'erreur suivante est survenue : " + e.getMessage());
+            err.newLine();
         }
     }
 
@@ -167,4 +191,12 @@ public class ServeurWeb {
         doc.getDocumentElement().normalize();
         return doc;
     }
+
+    private static boolean isBinaryFile(String fileName) {
+        return fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") ||
+                fileName.endsWith(".gif") || fileName.endsWith(".mp3") || fileName.endsWith(".wav") ||
+                fileName.endsWith(".mp4");
+    }
+
+
 }
