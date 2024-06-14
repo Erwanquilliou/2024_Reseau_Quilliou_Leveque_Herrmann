@@ -3,7 +3,7 @@ import java.net.Socket;
 
 public class AdresseMachine {
     String adresseM;
-    public AdresseMachine(Document doc, Socket clientSocket) {
+    public AdresseMachine(Socket clientSocket) {
         this.adresseM = clientSocket.getInetAddress().getHostAddress();
     }
 

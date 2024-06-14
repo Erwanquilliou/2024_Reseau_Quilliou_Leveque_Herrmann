@@ -4,6 +4,7 @@ import org.xml.sax.SAXException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.stream.Stream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -22,56 +23,58 @@ public class ServeurWeb {
             }
         }
 
-        Document doc = créerDocument("src/config.xml");
+        Document doc = creerDocument("src/config.xml");
 
-        BufferedWriter access = new BufferedWriter(new FileWriter(doc.getElementsByTagName("accesslog").item(0).getTextContent()));
-        BufferedWriter err = new BufferedWriter( new FileWriter(doc.getElementsByTagName("errorlog").item(0).getTextContent(),true));
         if (doc.getElementsByTagName("port").item(0)!=null && doc.getElementsByTagName("port").item(0).getTextContent()!= ""){
             port = Integer.parseInt(doc.getElementsByTagName("port").item(0).getTextContent());
         }
+        BufferedWriter err = new BufferedWriter( new FileWriter(doc.getElementsByTagName("errorlog").item(0).getTextContent(),true));
+        BufferedWriter access = new BufferedWriter(new FileWriter(doc.getElementsByTagName("accesslog").item(0).getTextContent()));
+        String cheminWeb = doc.getElementsByTagName("root").item(0).getTextContent();
+            try (ServerSocket serverSocket = new ServerSocket(port) ){
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Serveur web démarré sur le port " + port);
 
-            while (true) {
+                System.out.println("Serveur web démarré sur le port " + port);
+
+                while (true) {
                 try (Socket clientSocket = serverSocket.accept();
                      BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                      OutputStream out = clientSocket.getOutputStream()) {
+
+                    AdresseReseau adrR = new AdresseReseau(doc,"reject");
+                    AdresseReseau adrA = new AdresseReseau(doc,"accept");
+                    AdresseMachine adrC = new AdresseMachine(clientSocket);
+
                     if (doc.getElementsByTagName("reject").item(0)!=null && doc.getElementsByTagName("reject").item(0).getTextContent()!= "") {
 
-                        //on récupère les adresses du client, des réseaux acceptés et refusés.
-                        String adresseReseauClient = clientSocket.getInetAddress().getHostAddress();
-                        String adresseReseauRefusee = doc.getElementsByTagName("reject").item(0).getTextContent();
-                        String adresseReseauAcceptee = doc.getElementsByTagName("accept").item(0).getTextContent();
-
-                        //on les modifie afin de les comparer
-                        adresseReseauRefusee = adresseReseauRefusee.replace("."," ");
-                        adresseReseauAcceptee = adresseReseauAcceptee.replace("."," ");
-                        adresseReseauClient = adresseReseauClient.replace("."," ");
-                        String[] aRC = adresseReseauClient.split(" ");
-                        String[] aRF = adresseReseauRefusee.split(" ");
-                        String[] aRA = adresseReseauAcceptee.split(" ");
+                        String[] aRC = adrC.getChaineAdresseM();
+                        String[] aRF = adrR.getChaineAdresseR();
+                        String[] aRA = adrA.getChaineAdresseR();
  
                         // si l'adresse réseau du client correspond à l'adresse réseau refusée
                         if((aRC[0].compareTo(aRF[0]) == 0) && (aRC[1].compareTo(aRF[1]) == 0) && (aRC[2].compareTo(aRF[2]) == 0)){
                             //on coupe la connexion
+                            access.write("connexion refusée de " + clientSocket.getInetAddress());
+                            access.newLine();
+                            access.flush();
                             clientSocket.close();
-                            System.out.println("Connexion refusée de " + clientSocket.getInetAddress());
                             continue;
                         }
                         // si l'adresse réseau du client ne correspond pas non plus à une adresse réseau acceptée
                         else if(!(aRC[0].compareTo(aRA[0]) == 0) && (aRC[1].compareTo(aRA[1]) == 0) && (aRC[2].compareTo(aRA[2]) == 0)){
                             //on coupe aussi la connexion
+                            access.write("connexion inconnue refusée de " + clientSocket.getInetAddress());
+                            access.newLine();
+                            access.flush();
                             clientSocket.close();
-                            System.out.println("Connexion refusée, adresse inconnue de " + clientSocket.getInetAddress());
+
                             continue;
                         }
                         //sinon cela signifique que l'adresse réseau est acceptée, et donc que l'on ne coupe pas la connection
 
                     }
-                    System.out.println("Connexion acceptée de " + clientSocket.getInetAddress());
                     access.write("connexion de " + clientSocket.getInetAddress());
-
+                    access.newLine();
                     String inputLine;
                     String requestedFile = null;
 
@@ -79,17 +82,32 @@ public class ServeurWeb {
                     while ((inputLine = in.readLine()) != null) {
                         System.out.println(inputLine);
                         if (inputLine.startsWith("GET")) {
-                            requestedFile = inputLine.split(" ")[1];
+                            requestedFile = cheminWeb + inputLine.split(" ")[1]; // /var/www/index.html
+                        }else{
+                            // Si aucun fichier n'est spécifié, on sert index.html par défaut
+                            requestedFile = cheminWeb + "/index.html";
                         }
                         if (inputLine.isEmpty()) {
                             break; // Fin des en-têtes HTTP
                         }
                     }
+                    BufferedWriter status = new BufferedWriter(new FileWriter("status.log"));
+                    Runtime runtime = Runtime.getRuntime();
 
-                    // Si aucun fichier n'est spécifié, on sert index.html par défaut
-                    if (requestedFile == null || requestedFile.equals("/")) {
-                        requestedFile = "/index.html";
-                    }
+                    File fileProj = new File("/");
+
+                    Stream<ProcessHandle> allProcesses = ProcessHandle.allProcesses();
+
+
+                    status.write("Mémoire disponible : "+String.valueOf(runtime.freeMemory()));
+                    status.newLine();
+                    status.write("Espace disque disponible : " + fileProj.getFreeSpace());
+                    status.newLine();
+                    status.write("Nombre de processus en cours  : " + allProcesses.count());
+                    status.newLine();
+                    status.flush();
+
+
 
                     // Enlever le premier caractère '/' du chemin
                     requestedFile = requestedFile.substring(1);
@@ -119,17 +137,20 @@ public class ServeurWeb {
                         out.write(httpResponse.getBytes("UTF-8"));
                     }
 
+                    access.flush();
+
                 } catch (Exception e) {
-                    System.err.println("Erreur lors de la communication avec le client : " + e.getMessage());
+                    err.write("l'erreur suivante est survenue : " + e.getMessage());
                 }
+                err.flush();
             }
 
         } catch (Exception e) {
-            System.err.println("Erreur lors du démarrage du serveur sur le port " + port + " : " + e.getMessage());
+            err.write("l'erreur suivante est survenue : " + e.getMessage());
         }
     }
 
-    public static Document créerDocument(String s) throws ParserConfigurationException, IOException, SAXException {
+    public static Document creerDocument(String s) throws ParserConfigurationException, IOException, SAXException {
         File inputFile = new File(s);
 
         // Créer une fabrique de constructeurs de documents

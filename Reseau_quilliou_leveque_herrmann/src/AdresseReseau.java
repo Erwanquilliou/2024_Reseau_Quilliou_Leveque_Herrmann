@@ -6,7 +6,7 @@ public class AdresseReseau {
         this.adresseR = doc.getElementsByTagName(balise).item(0).getTextContent();
     }
 
-    public String[] getChaineAdresseM() {
+    public String[] getChaineAdresseR() {
         String[] s =  this.adresseR.replace("."," ").split(" ");
         return s;
     }
