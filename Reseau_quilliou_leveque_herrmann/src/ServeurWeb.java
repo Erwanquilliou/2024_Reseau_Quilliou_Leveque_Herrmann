@@ -35,7 +35,7 @@ public class ServeurWeb {
             s1 = reader.readLine();
         }
 
-        String codeDate = Main.interpreterCode(content);
+        String codeDate = ChargerCode.interpreterCode(content);
         System.out.println(codeDate);
         BufferedWriter index = new BufferedWriter(new FileWriter("var/www/index.html"));
         index.write(codeDate);

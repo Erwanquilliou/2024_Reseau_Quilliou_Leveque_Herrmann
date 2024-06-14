@@ -4,9 +4,11 @@
 class AdresseReseau
 class AdresseMachine
 class ServeurWeb
+class ChargerCode
 
 AdresseReseau "*" <-- "*" ServeurWeb
 AdresseMachine "1" <-- "*" ServeurWeb
+ChargerCode <-- ServeurWeb
 
 class AdresseReseau{
 - adresseR : String
@@ -22,6 +24,10 @@ class AdresseMachine{
 
 class ServeurWeb {
 + creerDocument(String): Document
+}
+
+class ChargerCode {
++ <static> interpreterCode(String) : String
 }
 
 @enduml
