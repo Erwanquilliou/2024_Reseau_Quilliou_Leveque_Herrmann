@@ -1,0 +1,27 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class AdresseReseau
+class AdresseMachine
+class ServeurWeb
+
+AdresseReseau "*" <-- "*" ServeurWeb
+AdresseMachine "1" <-- "*" ServeurWeb
+
+class AdresseReseau{
+- adresseR : String
++ AdresseReseau(Document doc, String balise)
++ getChaineAdresseR() : String[]
+}
+
+class AdresseMachine{
+- adresseM : String
++ AdresseMachine(Socket)
++ getChaineAdresseM() : String[]
+}
+
+class ServeurWeb {
++ creerDocument(String): Document
+}
+
+@enduml
