@@ -23,15 +23,32 @@ public class ServeurWeb {
                 System.err.println("Le port doit être un entier. Utilisation du port par défaut 8080.");
             }
         }
-
         Document doc = creerDocument("src/config.xml");
+        String cheminWeb = doc.getElementsByTagName("root").item(0).getTextContent();
+
+
+        BufferedReader reader = new BufferedReader(new FileReader( "var/www/index.html"));
+        String s1 = reader.readLine();
+        String content = "";
+        while (s1 != null){
+            content += s1 + "\n";
+            s1 = reader.readLine();
+        }
+
+        String codeDate = Main.interpreterCode(content);
+        System.out.println(codeDate);
+        BufferedWriter index = new BufferedWriter(new FileWriter("var/www/index.html"));
+        index.write(codeDate);
+        index.flush();
+
+
 
         if (doc.getElementsByTagName("port").item(0)!=null && doc.getElementsByTagName("port").item(0).getTextContent()!= ""){
             port = Integer.parseInt(doc.getElementsByTagName("port").item(0).getTextContent());
         }
         BufferedWriter err = new BufferedWriter( new FileWriter(doc.getElementsByTagName("errorlog").item(0).getTextContent()));
         BufferedWriter access = new BufferedWriter(new FileWriter(doc.getElementsByTagName("accesslog").item(0).getTextContent()));
-        String cheminWeb = doc.getElementsByTagName("root").item(0).getTextContent();
+
             try (ServerSocket serverSocket = new ServerSocket(port) ){
 
 
