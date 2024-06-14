@@ -3,6 +3,6 @@
     <root> /var/www </root>
     <accept>127.0.0.0/24</accept>
     <reject>128.0.0.0/24</reject>
-    <accesslog> /var/log/myweb/access.log </accesslog>
-    <errorlog> /var/log/myweb/error.log </errorlog>
+    <accesslog>var/log/myweb/access.log</accesslog>
+    <errorlog>var/log/myweb/error.log</errorlog>
 </webconf>

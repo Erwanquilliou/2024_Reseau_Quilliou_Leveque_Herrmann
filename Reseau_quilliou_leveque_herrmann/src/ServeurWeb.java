@@ -24,6 +24,8 @@ public class ServeurWeb {
 
         Document doc = créerDocument("src/config.xml");
 
+        BufferedWriter access = new BufferedWriter(new FileWriter(doc.getElementsByTagName("accesslog").item(0).getTextContent()));
+        BufferedWriter err = new BufferedWriter( new FileWriter(doc.getElementsByTagName("errorlog").item(0).getTextContent(),true));
         if (doc.getElementsByTagName("port").item(0)!=null && doc.getElementsByTagName("port").item(0).getTextContent()!= ""){
             port = Integer.parseInt(doc.getElementsByTagName("port").item(0).getTextContent());
         }
@@ -68,6 +70,7 @@ public class ServeurWeb {
 
                     }
                     System.out.println("Connexion acceptée de " + clientSocket.getInetAddress());
+                    access.write("connexion de " + clientSocket.getInetAddress());
 
                     String inputLine;
                     String requestedFile = null;
