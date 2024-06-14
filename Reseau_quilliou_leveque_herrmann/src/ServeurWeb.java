@@ -27,7 +27,7 @@ public class ServeurWeb {
         String cheminWeb = doc.getElementsByTagName("root").item(0).getTextContent();
 
 
-        BufferedReader reader = new BufferedReader(new FileReader( "var/www/index.html"));
+        BufferedReader reader = new BufferedReader(new FileReader( "var/www/prog.html"));
         String s1 = reader.readLine();
         String content = "";
         while (s1 != null){
@@ -37,7 +37,7 @@ public class ServeurWeb {
 
         String codeDate = ChargerCode.interpreterCode(content);
         System.out.println(codeDate);
-        BufferedWriter index = new BufferedWriter(new FileWriter("var/www/prog.html"));
+        BufferedWriter index = new BufferedWriter(new FileWriter("var/www/index.html"));
         index.write(codeDate);
         index.flush();
 
