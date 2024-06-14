@@ -1,5 +1,5 @@
 <webconf>
-    <port>8080</port>
+    <port>9090</port>
     <root> /var/www </root>
     <accept>127.0.0.0/24</accept>
     <reject>128.0.0.0/24</reject>
