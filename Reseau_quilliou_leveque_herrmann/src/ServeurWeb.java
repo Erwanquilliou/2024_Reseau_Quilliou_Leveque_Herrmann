@@ -145,16 +145,15 @@ public class ServeurWeb {
 
 
                         String httpResponse = "HTTP/1.1 200 OK\r\n";
+                        String htmlResponse = "<html><body>";
                         // Détecter le type de fichier et définir le Content-Type approprié
                         if (requestedFile.endsWith(".html")) {
                             httpResponse += "Content-Type: text/html\r\n";
                         } else if (requestedFile.endsWith(".xml")) {
                             httpResponse += "Content-Type: application/xml\r\n\r\n";
-                        }else if(requestedFile.endsWith(".jpg")){
-                            httpResponse += "Content-Type: image/jpg\r\n";
-                        }
-                        else {
-                            httpResponse += "Content-Type: image/png\r\n";
+                        } else {
+                            String sType = getType(requestedFile);
+                            httpResponse += "Content-Type: "+ sType +"\r\n";
                         }
 
                         if (!requestedFile.endsWith(".html")) {
@@ -162,19 +161,23 @@ public class ServeurWeb {
                             System.out.println(base64Content);
                             httpResponse += "Content-Encoding: base64\r\n";
                             httpResponse += "Content-Length: " + base64Content.length() + "\r\n";
-                            httpResponse += "\r\n" + base64Content;
+                            htmlResponse += "\r\n" + "<img src=\"data:"+getType(requestedFile)+";base64," + base64Content + "\" />";
+                            htmlResponse += "</body></html>";
+
+                            httpResponse += htmlResponse;
                             out.write(httpResponse.getBytes("UTF-8"));
                         } else {
                             httpResponse += "Content-Length: " + fileContent.length + "\r\n";
                             httpResponse += "\r\n";
-                            System.out.println(httpResponse);
                             out.write(httpResponse.getBytes("UTF-8"));
                             out.write(fileContent);
                         }
+
                     } else {
                         String httpResponse = "HTTP/1.1 404 Not Found\r\n\r\nFile Not Found ";
                         out.write(httpResponse.getBytes("UTF-8"));
                     }
+
 
                     access.flush();
 
@@ -213,6 +216,20 @@ public class ServeurWeb {
         return fileName.endsWith(".png") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") ||
                 fileName.endsWith(".gif") || fileName.endsWith(".mp3") || fileName.endsWith(".wav") ||
                 fileName.endsWith(".mp4");
+    }
+
+    private static String getType(String fileName){
+        String result = null;
+        switch (fileName.split("\\.")[1]){
+            case "png" : result = "image/png"; break;
+            case "jpg" : result = "image/jpg"; break;
+            case "gif" : result = "/gif"; break;
+            case "mp3" : result = "audio/mp3"; break;
+            case "mp4" : result = "video/mp4"; break;
+            case "jpeg" : result = "image/jpeg"; break;
+            case "wav" : result = "video/wav"; break;
+        }
+        return result;
     }
 
 
